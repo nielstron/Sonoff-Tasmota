@@ -1,4 +1,4 @@
-# Sonoff-Tasmota
+# Sonoff-Tasmota and jedi 2in1 light
 
 ## Fork-Disclaimer
 
