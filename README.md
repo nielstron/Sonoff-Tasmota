@@ -10,16 +10,16 @@ An example Home Assistant configuration could look like this:
 
 ```
 light:
-  - command_topic: cmnd/keller_decke_2/POWER
+  - command_topic: cmnd/basement_light/POWER
     name: "Basement light"
     payload_off: "OFF"
     payload_on: "ON"
     platform: mqtt
     qos: 1
     retain: true
-    state_topic: stat/keller_decke_2/POWER
-    color_temp_command_topic: cmnd/keller_decke_2/CTEMP 
-    color_temp_state_topic: stat/keller_decke_2/CTEMP 
+    state_topic: stat/basement_light/POWER
+    color_temp_command_topic: cmnd/basement_light/CTEMP 
+    color_temp_state_topic: stat/basement_light/CTEMP 
   
 ```
 What follows is the original Tasmota device description
