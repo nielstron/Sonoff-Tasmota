@@ -1,4 +1,30 @@
+# Sonoff-Tasmota
+
+## Fork-Disclaimer
+
+This Fork is a version of the tasmota Software that enables the use of the [jedi 2in1 light](http://www.jedi-light.com/de_DE/page/2-in-1) with the Sonoff device (tested only on the sonoff basic).
+
+For this the chip remembers when it was turned off last and whether it is on, so that it can conclude whether the light currently is in warm white or cold white mode. It posts this state per MQTT to ``stat/keller_decke_2/CTEMP`` (hardcoded at the moment) in [mireds](https://en.wikipedia.org/wiki/Mired) so that it works with [Home Assistant](https://home-assistant.io/). Commands to change the light mode can be sent to ``cmnd/device_name/CTEMP``. The transmitted color is automatically replaced by the nearest of the two possible light states (238 and 370) and then the light will be turned on and off accordingly. 
+
+An example Home Assistant configuration could look like this:
+
+``
+  - command_topic: cmnd/keller_decke_2/POWER
+    name: "Basement light"
+    payload_off: "OFF"
+    payload_on: "ON"
+    platform: mqtt
+    qos: 1
+    retain: true
+    state_topic: stat/keller_decke_2/POWER
+    color_temp_command_topic: cmnd/keller_decke_2/CTEMP 
+    color_temp_state_topic: stat/keller_decke_2/CTEMP 
+  
+``
+What follows is the original Tasmota device description
+
 ## Sonoff-Tasmota
+
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
 Current version is **5.8.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
