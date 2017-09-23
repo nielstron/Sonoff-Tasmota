@@ -423,6 +423,10 @@ void setRelay(uint8_t rpower)
     uint8_t sysPower = sysCfg.power;
     sysPower |= mask;
     if(rpower == sysPower && !is_on()){
+
+    //certain fixed array used by Theo
+    char svalue[128];  // was MESSZ
+
       //switch will be turned on and was off before
 
       //=>save millis
@@ -435,13 +439,17 @@ void setRelay(uint8_t rpower)
       if(!cold_white && time_off < 2500){
         cold_white = true;
         //publish to coldwhite mqtt (hard coded for now)
-        mqtt_publish_sec("stat/keller_decke_2/CTEMP", "238", true); // 1million / 4200K = 238 mireds
+        //mqtt_publish_sec("stat/keller_decke_2/CTEMP", "238", true); // 1million / 4200K = 238 mireds
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), 238);
+        mqtt_publish_topic_P(1, PSTR("CTEMP"), svalue, true);
       }
       //if cold white was true and it is now turned on again
       else if(cold_white){
         cold_white = false;
         //publish to coldwhite mqtt
-        mqtt_publish_sec("stat/keller_decke_2/CTEMP", "370", true); // 1million / 2700K = 370 mireds
+        //mqtt_publish_sec("stat/keller_decke_2/CTEMP", "370", true); // 1million / 2700K = 370 mireds
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), 370);
+        mqtt_publish_topic_P(1, PSTR("CTEMP"), svalue, true);
       }
     }
   }
