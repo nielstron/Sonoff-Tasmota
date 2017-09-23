@@ -9,6 +9,7 @@ For this the chip remembers when it was turned off last and whether it is on, so
 An example Home Assistant configuration could look like this:
 
 ```
+light:
   - command_topic: cmnd/keller_decke_2/POWER
     name: "Basement light"
     payload_off: "OFF"
