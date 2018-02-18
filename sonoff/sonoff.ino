@@ -271,6 +271,8 @@ uint8_t interlockmutex = 0;           // Interlock power command pending
 //Niels added
 uint64_t last_time_turned_off = 50; // Saves the milliseconds when switch was turned off the last time, 64 bits is necessary for to work for more than 3 weeks
 uint64_t last_time_turned_on = 0; //saves the milliseconds when switch was turned on the last time
+uint16_t mintime_color_change = 2500; // The estimated time between on and off that changes the lamp's color
+boolean should_cold_white = false;  // The color set via MQTT
 boolean cold_white = false;           //The current or last white state
 
 #ifdef USE_MQTT_TLS
@@ -436,21 +438,23 @@ void setRelay(uint8_t rpower)
       //cold_white is false when the light was or is warm white
       //if it was now turned on again in less than 1000ms
       //cold_white should become true
-      if(!cold_white && time_off < 2500){
+      //default color temperature when turned on is 370
+      int color_temp = 370;
+      if(!cold_white && time_off < mintime_color_change){
         cold_white = true;
         //publish to coldwhite mqtt (hard coded for now)
         //mqtt_publish_sec("stat/keller_decke_2/CTEMP", "238", true); // 1million / 4200K = 238 mireds
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), 238);
-        mqtt_publish_topic_P(1, PSTR("CTEMP"), svalue, true);
+        color_temp = 238;
       }
       //if cold white was true and it is now turned on again
       else if(cold_white){
         cold_white = false;
         //publish to coldwhite mqtt
         //mqtt_publish_sec("stat/keller_decke_2/CTEMP", "370", true); // 1million / 2700K = 370 mireds
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), 370);
-        mqtt_publish_topic_P(1, PSTR("CTEMP"), svalue, true);
+        color_temp = 370;
       }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), color_temp);
+      mqtt_publish_topic_P(1, PSTR("CTEMP"), svalue, true);
     }
   }
 
@@ -1071,62 +1075,52 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Delay\":%d}"), blogdelay);
     }
     else if (!strcmp_P(type,PSTR("POWER")) && (index > 0) && (index <= Maxdevice)) {
-      if ((payload < 0) || ((payload > 4))) {
-        payload = 9;
+      /**
+      MQTT an/aus befehle => hier nach eingestellter soll-farbe richten
+      **/
+      // If the lamp should be turned on
+      if(payload == 1){
+        if(!is_on()){
+          // only turn the lamp on
+          do_cmnd_power(1, 1);
+        }
+        //the wait time for toggeling the light
+        uint16_t once_blink_time = 210;
+        // if it is set to white and (now) not white
+        // or if it is set to warm and (now) white
+        if (should_cold_white xor cold_white){
+            //turn off and on again
+            delay(once_blink_time);
+            //turn off
+            do_cmnd_power(1,0);
+            //wait
+            delay(once_blink_time);
+            //turn on again
+            do_cmnd_power(1,1);
+        }
       }
-      do_cmnd_power(index, payload);
+      else{
+        if ((payload < 0) || ((payload > 4))) {
+          payload = 9;
+        }
+        do_cmnd_power(index, payload);
+      }
       fallbacktopic = 0;
       return;
     }
     else if (!strcmp_P(type,PSTR("CTEMP")) && (index > 0) && (index <= Maxdevice)) {
+      /**
+      MQTT-Farbe einstellen => hier soll-farbe einstellen
+      **/
+      // TODO soll-farbe speichern
       //only possible values are 238 and 370
       if(payload < 304){
-        payload = 238;
+        // 238 => cold
+        should_cold_white = true;
       }
       else{
-        payload = 370;
-      }
-      //the wait time for toggeling the light
-      uint16_t once_blink_time = 210;
-      // 238 => turn cold
-      if (payload == 238){
-        //sth has to be done if the light is off
-        if(!is_on()){
-          //turn on, off and on again
-          //turn on
-          do_cmnd_power(1, 1);
-          //wait
-          delay(once_blink_time);
-          //and off and on again
-          payload = 11;
-        }
-        //or if it is warm and on
-        else if(!cold_white ){
-          //turn off and on again
-          payload = 11;
-        }
-      }
-      // 370 => turn warm
-      else if (payload == 370){
-        //sth has to be done if the light is off
-        if(!is_on()){
-          //turn on
-          do_cmnd_power(1, 1);
-        }
-        //or if it is cold and on
-        else if(cold_white ){
-          //turn off and on again
-          payload = 11;
-        }
-      }
-      // 11 => turn off and on again
-      if(payload == 11){
-        //turn off
-        do_cmnd_power(1,0);
-        //wait
-        delay(once_blink_time);
-        //turn on again
-        do_cmnd_power(1,1);
+        // 370 => warm
+        should_cold_white = false;
       }
 
       fallbacktopic = 0;
