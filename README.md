@@ -4,7 +4,9 @@
 
 This Fork is a version of the tasmota Software that enables the use of the [jedi 2in1 light](http://www.jedi-light.com/de_DE/page/2-in-1) with the Sonoff device (tested only on the sonoff basic).
 
-For this the chip remembers when it was turned off last and whether it is on, so that it can conclude whether the light currently is in warm white or cold white mode. It posts this state per MQTT to `stat/device_name/CTEMP` in [mireds](https://en.wikipedia.org/wiki/Mired) so that it works with [Home Assistant](https://home-assistant.io/). Commands to change the light mode can be sent to `cmnd/device_name/CTEMP` (not hardcoded, this is adjusted to your settings). The transmitted color is automatically replaced by the nearest of the two possible light states (238 and 370) and then the light will be turned on and off accordingly. 
+For this the chip remembers when it was turned off last and whether it is on, so that it can conclude whether the light currently is in warm white or cold white mode. It posts this state per MQTT to `stat/device_name/CTEMP` in [mireds](https://en.wikipedia.org/wiki/Mired) so that it works with [Home Assistant](https://home-assistant.io/). Commands to change the light mode can be sent to `cmnd/device_name/CTEMP` (not hardcoded, this is adjusted to your settings). The transmitted color is automatically replaced by the nearest of the two possible light states (238 and 370). The light will be turned on and off accordingly with the next MQTT power on command.
+
+It is adviced to set button option 11 to 1 (`SetOption11 1`) as that way the user can control the light color manually via the button of the Sonos Device (by turning the lamp on and off again). To do this via MQTT rely on the toggle function, as when sending power on commands, the light color will be enforced to be equal to the color set in the CTEMP channel.
 
 An example Home Assistant configuration could look like this:
 
